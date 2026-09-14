@@ -57,6 +57,10 @@ async function issueOtp({ studentId, email, purpose, db = prisma }) {
     data: { studentId, purpose, codeHash, expiresAt, maxAttempts: MAX_ATTEMPTS },
   });
 
+  if (env.NODE_ENV !== "production") {
+    console.info(`[OTP TEST] purpose=${purpose} studentId=${studentId} code=${code}`);
+  }
+
   await sendEmail({
     to: email,
     subject: "Your SUG VOTE verification code",

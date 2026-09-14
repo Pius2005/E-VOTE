@@ -36,8 +36,9 @@ async function init() {
   document.getElementById("student-name").textContent = `Welcome, ${me.student.fullName}`;
   const requestedId = new URLSearchParams(window.location.search).get("electionId");
   const { elections } = await api("/vote/elections/active-for-me");
+  const activeElectionIds = new Set((elections || []).map((election) => election.id));
   electionId = requestedId || elections?.[0]?.id;
-  if (!electionId || !elections.some((election) => election.id === electionId)) {
+  if (!electionId || !activeElectionIds.has(electionId)) {
     document.getElementById("otp-error").textContent = "There is no active election you're eligible to vote in right now.";
     return;
   }
@@ -47,18 +48,23 @@ async function init() {
 }
 
 async function sendOtp() {
+  const resendBtn = document.getElementById("resend-otp");
+  const errorEl = document.getElementById("otp-error");
+  resendBtn.disabled = true;
+  errorEl.textContent = "";
   try {
     const res = await api(`/vote/sessions/${sessionId}/otp/send`, { method: "POST" });
     startOtpTimer(res.expiresInSeconds, res.resendCooldownSeconds);
   } catch (err) {
-    document.getElementById("otp-error").textContent = err.message;
+    errorEl.textContent = err.message;
+    resendBtn.disabled = false;
   }
 }
 
 function startOtpTimer(expiresIn, cooldown) {
   const timerEl = document.getElementById("otp-timer");
   const resendBtn = document.getElementById("resend-otp");
-  resendBtn.disabled = true;
+  resendBtn.disabled = cooldown > 0;
   let remaining = cooldown;
   timerEl.textContent = expiresIn;
   let expireLeft = expiresIn;

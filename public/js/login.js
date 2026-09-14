@@ -21,13 +21,20 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
   const errorEl = document.getElementById("login-error");
   errorEl.textContent = "";
   try {
-    await api("/auth/login", {
+    const result = await api("/auth/login", {
       method: "POST",
       body: {
         identifier: document.getElementById("matric").value.trim(),
         password: document.getElementById("password").value,
       },
     });
+
+    const role = result?.student?.role;
+    if (role === "ADMIN" || role === "ELECTION_OFFICER") {
+      window.location.href = "/pages/admin.html";
+      return;
+    }
+
     window.location.href = "/pages/vote.html";
   } catch (err) {
     errorEl.textContent = err.message;

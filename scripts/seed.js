@@ -12,15 +12,40 @@ async function main() {
     process.exit(1);
   }
 
-  const adminPassword = await argon2.hash("ChangeMe!2024", { type: argon2.argon2id });
+  const adminPassword = await argon2.hash("AdminPass!2025", { type: argon2.argon2id });
   const admin = await prisma.student.upsert({
     where: { matricNumber: "ADMIN/0001" },
-    update: {},
+    update: {
+      fullName: "System Admin",
+      email: "admin@example.edu",
+      passwordHash: adminPassword,
+      role: "ADMIN",
+      accountStatus: "ACTIVE",
+    },
+    create: {
+      fullName: "System Admin",
+      matricNumber: "ADMIN/0001",
+      email: "admin@example.edu",
+      passwordHash: adminPassword,
+      role: "ADMIN",
+    },
+  });
+
+  const officerPassword = await argon2.hash("OfficerPass!2025", { type: argon2.argon2id });
+  const officer = await prisma.student.upsert({
+    where: { matricNumber: "EO/0001" },
+    update: {
+      fullName: "Electoral Officer",
+      email: "electoral.officer@example.edu",
+      passwordHash: officerPassword,
+      role: "ELECTION_OFFICER",
+      accountStatus: "ACTIVE",
+    },
     create: {
       fullName: "Electoral Officer",
-      matricNumber: "ADMIN/0001",
+      matricNumber: "EO/0001",
       email: "electoral.officer@example.edu",
-      passwordHash: adminPassword,
+      passwordHash: officerPassword,
       role: "ELECTION_OFFICER",
     },
   });
@@ -30,7 +55,15 @@ async function main() {
   for (let i = 1; i <= 5; i++) {
     const s = await prisma.student.upsert({
       where: { matricNumber: `CSC/20/000${i}` },
-      update: {},
+      update: {
+        fullName: `Sample Student ${i}`,
+        email: `student${i}@example.edu`,
+        department: "Computer Science",
+        level: "300",
+        passwordHash: studentPassword,
+        role: "STUDENT",
+        accountStatus: "ACTIVE",
+      },
       create: {
         fullName: `Sample Student ${i}`,
         matricNumber: `CSC/20/000${i}`,
@@ -76,7 +109,8 @@ async function main() {
   });
 
   console.log("Seed complete.");
-  console.log("Admin login: ADMIN/0001 / ChangeMe!2024");
+  console.log("Admin login: ADMIN/0001 / AdminPass!2025");
+  console.log("Electoral Officer login: EO/0001 / OfficerPass!2025");
   console.log("Student login: CSC/20/0001 / Passw0rd!23");
 }
 

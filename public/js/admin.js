@@ -48,15 +48,35 @@ function transitionButtons(election) {
 }
 
 async function loadElections() {
-  const response = await api("/admin/elections");
+  const [response, me] = await Promise.all([api("/admin/elections"), api("/auth/me")]);
+  const role = me.student.role;
+  const welcomeName = document.getElementById("welcome-name");
+  if (welcomeName) {
+    welcomeName.textContent = role === "ADMIN" ? "Welcome back, Administrator" : "Welcome back, Electoral Officer";
+  }
+  const settingsCaption = document.getElementById("settings-caption");
+  if (settingsCaption) {
+    settingsCaption.textContent = role === "ADMIN"
+      ? "Admins can change settings; Election Officers can view them."
+      : "Election Officers can view settings, while only Administrators can change them.";
+  }
+  const faceEnrollmentCard = document.getElementById("face-enrollment-card");
+  if (faceEnrollmentCard) {
+    faceEnrollmentCard.style.display = role === "ADMIN" ? "block" : "none";
+  }
+  document.getElementById("account-management-card").style.display = role === "ADMIN" ? "block" : "none";
   elections = response.elections;
-  [document.getElementById("election-select"), document.getElementById("results-election-select")].forEach((select) => {
-    select.replaceChildren(...elections.map((election) => {
-      const option = make("option", "", `${election.title} (${election.status})`);
-      option.value = election.id;
-      return option;
-    }));
+  const electionOptions = elections.map((election) => {
+    const option = make("option", "", `${election.title} (${election.status})`);
+    option.value = election.id;
+    return option;
   });
+  [document.getElementById("election-select"), document.getElementById("results-election-select"), document.getElementById("position-election-select"), document.getElementById("candidate-election-select")].forEach((select) => {
+    select.replaceChildren(...electionOptions.map((option) => option.cloneNode(true)));
+  });
+
+  const selectedElectionId = document.getElementById("candidate-election-select").value || elections[0]?.id || "";
+  await populateCandidatePositions(selectedElectionId);
 
   document.getElementById("elections-list").replaceChildren(...elections.map((election) => {
     const row = document.createElement("div");
@@ -160,15 +180,77 @@ async function loadSettings() {
   const [response, me] = await Promise.all([api("/admin/settings"), api("/auth/me")]);
   ["SITE_NAME", "SUPPORT_EMAIL", "ELECTORAL_OFFICE_CONTACT"].forEach((key) => { document.getElementById(`setting-${key}`).value = response.settings[key] || ""; });
   document.getElementById("account-management-card").style.display = me.student.role === "ADMIN" ? "block" : "none";
+  const settingsCaption = document.getElementById("settings-caption");
+  if (settingsCaption) {
+    settingsCaption.textContent = me.student.role === "ADMIN"
+      ? "Admins can change settings; Election Officers can view them."
+      : "Election Officers can view settings, while only Administrators can change them.";
+  }
+}
+
+async function populateCandidatePositions(electionId) {
+  const candidatePositionSelect = document.getElementById("candidate-position-select");
+  if (!electionId) {
+    candidatePositionSelect.replaceChildren();
+    return;
+  }
+
+  const details = await api(`/admin/elections/${electionId}`);
+  candidatePositionSelect.replaceChildren(...(details.election.positions || []).map((position) => {
+    const option = make("option", "", position.title);
+    option.value = position.id;
+    return option;
+  }));
 }
 
 document.getElementById("election-select").addEventListener("change", (event) => loadDashboard(event.target.value));
 document.getElementById("results-election-select").addEventListener("change", (event) => loadResults(event.target.value));
+document.getElementById("candidate-election-select").addEventListener("change", (event) => populateCandidatePositions(event.target.value));
 document.getElementById("create-election-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   await api("/admin/elections", { method: "POST", body: { title: document.getElementById("e-title").value, academicSession: document.getElementById("e-session").value, startDate: document.getElementById("e-start").value, endDate: document.getElementById("e-end").value } });
   event.target.reset();
   await loadElections();
+});
+document.getElementById("create-position-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const electionId = document.getElementById("position-election-select").value;
+  await api(`/admin/elections/${electionId}/positions`, {
+    method: "POST",
+    body: {
+      title: document.getElementById("position-title").value,
+      description: document.getElementById("position-description").value,
+      displayOrder: Number(document.getElementById("position-order").value || 0),
+      required: true,
+    },
+  });
+  event.target.reset();
+  await loadElections();
+});
+document.getElementById("create-candidate-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const electionId = document.getElementById("candidate-election-select").value;
+  const positionId = document.getElementById("candidate-position-select").value;
+  const formData = new FormData();
+
+  if (document.getElementById("candidate-photo").files[0]) {
+    formData.append("photo", document.getElementById("candidate-photo").files[0]);
+  }
+  formData.append("positionId", positionId);
+  formData.append("fullName", document.getElementById("candidate-name").value);
+  formData.append("level", document.getElementById("candidate-level").value);
+  formData.append("course", document.getElementById("candidate-course").value);
+  formData.append("statement", document.getElementById("candidate-statement").value);
+  formData.append("candidateInfo", document.getElementById("candidate-info").value);
+  formData.append("displayOrder", document.getElementById("candidate-order").value || "0");
+
+  await api(`/admin/elections/${electionId}/candidates`, {
+    method: "POST",
+    body: formData,
+    isForm: true,
+  });
+  event.target.reset();
+  await populateCandidatePositions(electionId);
 });
 document.getElementById("import-btn").addEventListener("click", async () => {
   const file = document.getElementById("csv-file").files[0];

@@ -71,7 +71,7 @@ router.patch("/positions/:id", async (req, res) => {
 
 // --- Candidates ---
 router.post("/elections/:electionId/candidates", upload.single("photo"), async (req, res) => {
-  const { positionId, studentId, fullName, slogan, manifesto, displayOrder } = req.body || {};
+  const { positionId, studentId, fullName, slogan, manifesto, statement, candidateInfo, level, course, displayOrder } = req.body || {};
   if (!positionId || !fullName) return res.status(400).json({ error: "positionId and fullName are required" });
 
   const election = await prisma.election.findUnique({ where: { id: req.params.electionId } });
@@ -90,6 +90,11 @@ router.post("/elections/:electionId/candidates", upload.single("photo"), async (
     return res.status(400).json({ error: "Uploaded photo could not be processed — it may not be a valid image" });
   }
 
+  const normalizedStatement = (statement ?? slogan ?? "")?.trim() || null;
+  const normalizedInfo = (candidateInfo ?? manifesto ?? "")?.trim() || null;
+  const normalizedLevel = (level ?? "")?.trim() || null;
+  const normalizedCourse = (course ?? "")?.trim() || null;
+
   const candidate = await prisma.$transaction(async (tx) => {
     if (media) await tx.mediaAsset.create({ data: media });
     return tx.candidate.create({
@@ -98,8 +103,12 @@ router.post("/elections/:electionId/candidates", upload.single("photo"), async (
         positionId,
         studentId: studentId || null,
         fullName,
-        slogan,
-        manifesto,
+        slogan: normalizedStatement,
+        manifesto: normalizedInfo,
+        statement: normalizedStatement,
+        candidateInfo: normalizedInfo,
+        level: normalizedLevel,
+        course: normalizedCourse,
         displayOrder: displayOrder ? Number(displayOrder) : 0,
         mediaAssetId: media?.id || null,
         profilePhotoUrl: media ? `/api/media/${media.id}` : null,
@@ -116,7 +125,7 @@ router.patch("/candidates/:id", upload.single("photo"), async (req, res) => {
 
   const election = await prisma.election.findUnique({ where: { id: existing.electionId } });
   const votingStarted = ["ACTIVE", "PAUSED", "CLOSED", "RESULTS_PUBLISHED"].includes(election.status);
-  const { slogan, manifesto, status, displayOrder } = req.body || {};
+  const { slogan, manifesto, statement, candidateInfo, level, course, status, displayOrder } = req.body || {};
 
   if (votingStarted && (req.body.fullName || req.body.positionId)) {
     return res.status(409).json({ error: "Name/position cannot change once voting has started" });
@@ -136,6 +145,11 @@ router.patch("/candidates/:id", upload.single("photo"), async (req, res) => {
     if (!position) return res.status(400).json({ error: "Position does not belong to this election" });
   }
 
+  const normalizedStatement = statement !== undefined ? (statement?.trim() || null) : slogan !== undefined ? (slogan?.trim() || null) : undefined;
+  const normalizedInfo = candidateInfo !== undefined ? (candidateInfo?.trim() || null) : manifesto !== undefined ? (manifesto?.trim() || null) : undefined;
+  const normalizedLevel = level !== undefined ? (level?.trim() || null) : undefined;
+  const normalizedCourse = course !== undefined ? (course?.trim() || null) : undefined;
+
   const candidate = await prisma.$transaction(async (tx) => {
     if (media) await tx.mediaAsset.create({ data: media });
     const updated = await tx.candidate.update({
@@ -143,8 +157,10 @@ router.patch("/candidates/:id", upload.single("photo"), async (req, res) => {
       data: {
         ...(!votingStarted && req.body.fullName && { fullName: req.body.fullName }),
         ...(!votingStarted && req.body.positionId && { positionId: req.body.positionId }),
-        ...(slogan !== undefined && { slogan }),
-        ...(manifesto !== undefined && { manifesto }),
+        ...(normalizedStatement !== undefined && { slogan: normalizedStatement, statement: normalizedStatement }),
+        ...(normalizedInfo !== undefined && { manifesto: normalizedInfo, candidateInfo: normalizedInfo }),
+        ...(normalizedLevel !== undefined && { level: normalizedLevel }),
+        ...(normalizedCourse !== undefined && { course: normalizedCourse }),
         ...(status !== undefined && { status }),
         ...(displayOrder !== undefined && { displayOrder: Number(displayOrder) }),
         ...(media && { mediaAssetId: media.id, profilePhotoUrl: `/api/media/${media.id}` }),

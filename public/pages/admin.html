@@ -30,7 +30,7 @@
     </header>
     <div class="admin-content">
     <div id="view-dashboard">
-      <div class="view-intro"><div><span class="view-kicker">OVERVIEW</span><h2>Welcome back, Election Officer</h2><p class="muted">A clear view of turnout, activity, and election health.</p></div><label class="compact-control" for="election-select"><span>Active election</span><select id="election-select"></select></label></div>
+      <div class="view-intro"><div><span class="view-kicker">OVERVIEW</span><h2 id="welcome-name">Welcome back</h2><p class="muted">A clear view of turnout, activity, and election health.</p></div><label class="compact-control" for="election-select"><span>Active election</span><select id="election-select"></select></label></div>
       <div class="grid-metrics" id="metrics"></div>
       <div class="card" id="status-card"></div>
       <div class="card">
@@ -48,7 +48,7 @@
     </div>
 
     <div id="view-elections" style="display:none;">
-      <div class="view-intro"><div><span class="view-kicker">WORKSPACE</span><h2>Elections</h2><p class="muted">Create elections and guide them through each voting phase.</p></div></div>
+      <div class="view-intro"><div><span class="view-kicker">WORKSPACE</span><h2>Elections</h2><p class="muted">Create elections, set positions, and add candidate profiles.</p></div></div>
       <div class="card">
         <h2>Create Election</h2>
         <form id="create-election-form">
@@ -58,6 +58,44 @@
           <label>End Date</label><input type="text" id="e-end" placeholder="2026-09-11T18:00" required />
           <button class="btn btn-primary btn-block" type="submit">Create</button>
         </form>
+      </div>
+      <div class="card">
+        <h2>Positions &amp; Candidate Profiles</h2>
+        <div style="display:grid;gap:20px;">
+          <form id="create-position-form">
+            <label>Election</label>
+            <select id="position-election-select"></select>
+            <label>Position Title</label>
+            <input type="text" id="position-title" required />
+            <label>Description (optional)</label>
+            <textarea id="position-description" rows="3" placeholder="Brief description of the position"></textarea>
+            <label>Display Order</label>
+            <input type="number" id="position-order" min="0" value="0" />
+            <button class="btn btn-primary btn-block" type="submit">Add Position</button>
+          </form>
+
+          <form id="create-candidate-form" enctype="multipart/form-data">
+            <label>Election</label>
+            <select id="candidate-election-select"></select>
+            <label>Position</label>
+            <select id="candidate-position-select" required></select>
+            <label>Candidate Name</label>
+            <input type="text" id="candidate-name" required />
+            <label>Level (optional)</label>
+            <input type="text" id="candidate-level" placeholder="e.g. 300 Level" />
+            <label>Course / Department (optional)</label>
+            <input type="text" id="candidate-course" placeholder="e.g. Computer Science" />
+            <label>Candidate Statement (optional)</label>
+            <textarea id="candidate-statement" rows="3" placeholder="A short campaign statement"></textarea>
+            <label>Candidate Information (optional)</label>
+            <textarea id="candidate-info" rows="5" placeholder="Include background, manifesto, or other details"></textarea>
+            <label>Display Order</label>
+            <input type="number" id="candidate-order" min="0" value="0" />
+            <label>Candidate Photo (optional)</label>
+            <input type="file" id="candidate-photo" accept="image/*" />
+            <button class="btn btn-primary btn-block" type="submit">Add Candidate</button>
+          </form>
+        </div>
       </div>
       <div class="card">
         <h2>All Elections</h2>
@@ -79,7 +117,7 @@
         <input type="text" id="voter-search" placeholder="Search by name, matric, or email" />
         <div id="voters-table" style="margin-top:14px;"></div>
       </div>
-      <div class="card">
+      <div class="card" id="face-enrollment-card" style="display:none;">
         <h2>Face Enrollment</h2>
         <p class="muted">With consent, select a clear image containing one face. The image is processed in this browser; only an encrypted face embedding is stored.</p>
         <form id="face-enrollment-form">
@@ -116,7 +154,7 @@
     <div id="view-settings" style="display:none;">
       <div class="view-intro"><div><span class="view-kicker">CONFIGURATION</span><h2>Settings</h2><p class="muted">Keep portal details and staff access up to date.</p></div></div>
       <div class="card">
-        <p class="muted">Only Admins can change settings; Election Officers can view them.</p>
+        <p class="muted" id="settings-caption">Only Admins can change settings; Election Officers can view them.</p>
         <label>Site Name</label>
         <input type="text" id="setting-SITE_NAME" />
         <label>Support Email</label>

@@ -282,6 +282,10 @@ model Candidate {
   mediaAsset         MediaAsset?     @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
   slogan             String?
   manifesto          String?
+  statement          String?
+  candidateInfo      String?
+  level              String?
+  course             String?
   status             CandidateStatus @default(ACTIVE)
   displayOrder       Int             @default(0)
   disqualifiedReason String?
