@@ -25,6 +25,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://sugvote:sugvote@localhost:5432/sugvote_test
+      DIRECT_URL: postgresql://sugvote:sugvote@localhost:5432/sugvote_test
       RUN_DB_TESTS: "1"
       SESSION_SECRET: ci-session-secret-at-least-thirty-two-characters
       OTP_PEPPER: ci-otp-pepper-at-least-thirty-two-characters

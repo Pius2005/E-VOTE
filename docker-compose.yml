@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: sug_vote_dev_password
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: sug_vote
     ports:
       - "5432:5432"

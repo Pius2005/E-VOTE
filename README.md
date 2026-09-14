@@ -50,6 +50,7 @@ See `.env.example` for the full list with descriptions. At minimum for local dev
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string (Neon, Supabase, etc.) |
+| `DIRECT_URL` | Direct PostgreSQL connection used by Prisma migrations; for local development it can match `DATABASE_URL` |
 | `SESSION_SECRET` | Signs session JWTs — `openssl rand -hex 32` |
 | `OTP_PEPPER` | HMACs stored OTP hashes — `openssl rand -hex 32` |
 | `RESEND_API_KEY` | Leave blank in dev to log OTP emails to the console instead of sending |
