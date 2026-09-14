@@ -16,7 +16,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "seed": "node scripts/seed.js",
-    "test": "node --test tests"
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@prisma/client": "^5.19.1",

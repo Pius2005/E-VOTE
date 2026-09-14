@@ -58,7 +58,7 @@ async function issueOtp({ studentId, email, purpose, db = prisma }) {
   });
 
   if (env.NODE_ENV !== "production") {
-    console.info(`[OTP TEST] purpose=${purpose} studentId=${studentId} code=${code}`);
+    console.log(`[OTP TEST] purpose=${purpose} studentId=${studentId} code=${code}`);
   }
 
   await sendEmail({
